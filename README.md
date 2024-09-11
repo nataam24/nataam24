@@ -169,6 +169,89 @@ print(f'Base de datos guardada en: {drive_db_path}')
 # Este código es útil en la creación de entornos de prueba o en la enseñanza de conceptos de bases de datos, simulando un entorno financiero realista sin necesidad de datos reales.
 
 
+# se agregó lo siguiente para importar librerías y poder crear las gráficas
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.impute import SimpleImputer
+import seaborn as sns
+
+# 1. Conectar a la base de datos SQLite
+try:
+    conn = sqlite3.connect("/content/drive/MyDrive/financial_data.db")
+    print("Conexión a la base de datos exitosa.")
+except Exception as e:
+    print(f"Error al conectar a la base de datos: {e}")
+    raise
+
+# 2. Leer la tabla 'db_temp_Azure_vw_CLIENTES' en un DataFrame
+try:
+    df = pd.read_sql_query("SELECT * FROM transactions", conn)
+    print("Datos leídos exitosamente.")
+except Exception as e:
+    print(f"Error al leer la tabla: {e}")
+    conn.close()
+    raise
+
+# 3. Verificación de completitud y visualización gráfica
+completitud = df.notnull().mean() * 100
+completitud.plot(kind='bar', figsize=(12, 6), color='skyblue')
+plt.title('Completitud de las variables (% de valores no nulos)')
+plt.ylabel('Porcentaje de completitud')
+plt.xticks(rotation=45)
+plt.show()
+
+# 4. Estadísticas descriptivas para variables numéricas y visualización de la matriz
+estadisticas_descriptivas = df.describe().transpose()
+plt.figure(figsize=(12, 8))
+sns.heatmap(estadisticas_descriptivas, annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Matriz de estadísticas descriptivas')
+plt.show()
+
+# 5. Distribución de las variables numéricas
+variables_numericas = df.select_dtypes(include=['float64', 'int64']).columns
+
+for var in variables_numericas:
+    plt.figure(figsize=(10, 6))
+    sns.histplot(df[var].dropna(), kde=True, bins=30, color='cornflowerblue')
+    plt.title(f'Distribución de la variable: {var}')
+    plt.xlabel(var)
+    plt.ylabel('Frecuencia')
+    plt.show()
+
+# 6. Matriz de correlación para variables numéricas
+plt.figure(figsize=(10, 8))
+correlacion = df[variables_numericas].corr()
+sns.heatmap(correlacion, annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Matriz de correlación')
+plt.show()
+
+# 7. Cerrar la conexión a la base de datos
+conn.close()
+print("Conexión a la base de datos cerrada.")
+
+# resultados
+# valores nulos
+<img width="537" alt="image" src="https://github.com/user-attachments/assets/d421f00c-d5fd-4581-8e9c-2dfaf2809d5c">
+La mayoría de las variables, si no todas, tienen un porcentaje de completitud muy cercano al 100%. Esto indica que hay muy pocos valores faltantes o nulos en el conjunto de datos.
+
+# Estadísticas descriptivas
+<img width="453" alt="image" src="https://github.com/user-attachments/assets/14a9eb6c-7aec-4203-adfe-89815a71c5f1">
+La gráfica es una matriz de calor (heatmap) de estadísticas descriptivas. Este tipo de visualizaciones es útil para comparar de manera rápida y visual diferentes estadísticas de una o más variables. En este caso, el gráfico muestra dos variables principales: transaction_amount y fraudulent.
+
+# Distribución de la variable transaction_amount
+<img width="419" alt="image" src="https://github.com/user-attachments/assets/02d5d3e4-5efd-43f4-b2c3-d9812093450f">
+La distribución de los montos de las transacciones parece ser asimétrica a la derecha o positivamente sesgada. Esto significa que la mayoría de las transacciones tienen un monto relativamente bajo, pero hay algunas transacciones con montos mucho más altos que "jalan" la media hacia la derecha.
+
+# Distribución de la variable fraudolent
+<img width="428" alt="image" src="https://github.com/user-attachments/assets/b7a23f48-f0eb-4efc-9aff-3fce3c8cadc0">
+Desbalance de clases: La gráfica muestra un claro desbalance entre las clases. La gran mayoría de las transacciones son clasificadas como no fraudulentas (valor 0 en el eje X), mientras que solo una pequeña proporción se clasifica como fraudulenta (valor 1).
+Pocos casos de fraude: La altura de la barra correspondiente al valor 1 es mucho más pequeña que la de la barra correspondiente al valor 0, lo que indica que los casos de fraude son relativamente pocos en comparación con las transacciones legítimas.
+
+# Matriz de correlación
+<img width="383" alt="image" src="https://github.com/user-attachments/assets/dc9b8c46-779e-4bc8-9245-b050f2c60099">
+Existe una correlación positiva fuerte entre el monto de la transacción (transaction_amount) y la probabilidad de que sea fraudulenta (fraudulent). Esto significa que, en general, las transacciones de mayor monto tienen más probabilidad de ser fraudulentas.
+
+
 
 
 
